@@ -1,0 +1,33 @@
+{
+  "Supply_Suspend": {
+    "ECS07_Supply_Suspend": 1,
+    "ECS05_Read_Import_Registers": 1,
+    "CS01_Read_Device_Log": 1
+  },
+  "Supply_Restore": {
+    "ECS08_Supply_Restore": 1,
+    "ECS05_Read_Import_Registers": 1
+  },
+  "Meter_Read_Scheduled": {
+    "ECS05_Read_Import_Registers": 1,
+    "ECS06_Read_Export_Registers": 1
+  },
+  "Commissioning": {
+    "CS02_Join": 1,
+    "ECS01_Read_Instantaneous_Import_Registers": 2,
+    "CS01_Read_Device_Log": 1
+  },
+  "Alert_Registration": {
+    "ECS15_Alert_Installation": 1,
+    "CS01_Read_Device_Log": 1
+  },
+  "Tariff_Update": {
+    "ECS09_Update_Import_Tariff": 1,
+    "ECS10_Update_Export_Tariff": 1,
+    "ECS05_Read_Import_Registers": 1
+  },
+  "Firmware_Update": {
+    "CS05_Activate_Firmware": 1,
+    "CS01_Read_Device_Log": 2
+  }
+}

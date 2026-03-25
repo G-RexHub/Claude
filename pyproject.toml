@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=42"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dcc-tracker"
+version = "0.1.0"
+description = "DCC Smart Metering Service Request Tracker and Anomaly Threshold Calculator"
+requires-python = ">=3.9"
+dependencies = ["click>=8.1"]
+
+[project.scripts]
+dcc-tracker = "dcc_tracker:cli"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["dcc_tracker*"]
