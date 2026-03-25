@@ -15,7 +15,8 @@ from .config import (
 
 # CSV column names for the threshold report
 REPORT_FIELDNAMES = [
-    "Service Request Type",
+    "Service Request Code",
+    "Service Request Name",
     "Total Estimated Requests",
     "Daily Threshold (Base)",
     "DCC Adapter Warning",
@@ -62,6 +63,17 @@ def load_orchestrations(config_path: Path) -> dict[str, dict[str, int]]:
             "Ensure orchestrations.json is present in the project root."
         )
     with config_path.open() as f:
+        return json.load(f)
+
+
+def load_sr_registry(sr_registry_path: Path) -> dict[str, str]:
+    """Load service_requests.json — a mapping of SR code to display name.
+
+    Returns an empty dict if the file is absent (graceful degradation).
+    """
+    if not sr_registry_path.exists():
+        return {}
+    with sr_registry_path.open() as f:
         return json.load(f)
 
 
@@ -144,12 +156,19 @@ def add_orchestration(
 def calculate_sr_totals(
     all_orchestrations: dict[str, dict[str, int]],
     estimates: dict[str, int],
+    sr_registry: dict[str, str] | None = None,
 ) -> dict[str, int]:
     """Compute total estimated requests per SR type over the 8-month period.
 
+    All SR types from sr_registry are included in the output (with 0 for those
+    not referenced by any orchestration), ensuring the full ADT report always
+    covers every known service request type.
+
     Orchestrations with no estimate contribute 0.
     """
-    totals: dict[str, int] = {}
+    # Pre-seed with every known SR type at 0
+    totals: dict[str, int] = {sr: 0 for sr in (sr_registry or {})}
+
     for orch_name, sr_map in all_orchestrations.items():
         est = estimates.get(orch_name, 0)
         for sr_type, count_per_run in sr_map.items():
@@ -168,18 +187,22 @@ def calculate_thresholds(
 def build_report_rows(
     sr_totals: dict[str, int],
     thresholds: dict[str, float],
+    sr_registry: dict[str, str] | None = None,
 ) -> list[dict]:
-    """Return a list of row dicts for the CSV writer, sorted by SR type name.
+    """Return a list of row dicts for the CSV writer, sorted by SR code.
 
-    Each row contains the base daily threshold plus the 4 anomaly level thresholds,
+    Each row contains the SR code, human-readable name (from sr_registry),
+    the base daily threshold, and the 4 anomaly level thresholds,
     all rounded to 2 decimal places.
     """
+    registry = sr_registry or {}
     rows = []
-    for sr_type in sorted(sr_totals):
-        base = thresholds[sr_type]
+    for sr_code in sorted(sr_totals):
+        base = thresholds[sr_code]
         rows.append({
-            "Service Request Type": sr_type,
-            "Total Estimated Requests": sr_totals[sr_type],
+            "Service Request Code": sr_code,
+            "Service Request Name": registry.get(sr_code, ""),
+            "Total Estimated Requests": sr_totals[sr_code],
             "Daily Threshold (Base)": round(base, 2),
             "DCC Adapter Warning": round(base * ADAPTER_WARNING_MULT, 2),
             "DCC Adapter Quarantine": round(base * ADAPTER_QUARANTINE_MULT, 2),

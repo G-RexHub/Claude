@@ -11,6 +11,7 @@ DCC_WARNING_MULT = 2.00          # DCC Warning            (+100%)
 DCC_QUARANTINE_MULT = 2.25       # DCC Quarantine         (+125%)
 
 DEFAULT_CONFIG_FILENAME = "orchestrations.json"
+DEFAULT_SR_REGISTRY_FILENAME = "service_requests.json"
 DEFAULT_STATE_FILENAME = "tracker_state.json"
 DEFAULT_STATE_DIR = "data"
 DEFAULT_REPORTS_DIR = "reports"
@@ -32,6 +33,11 @@ def get_project_root() -> Path:
 def get_config_path() -> Path:
     """Return the absolute path to orchestrations.json."""
     return get_project_root() / DEFAULT_CONFIG_FILENAME
+
+
+def get_sr_registry_path() -> Path:
+    """Return the absolute path to service_requests.json."""
+    return get_project_root() / DEFAULT_SR_REGISTRY_FILENAME
 
 
 def get_state_path() -> Path:
