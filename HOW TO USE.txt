@@ -1,0 +1,76 @@
+================================================
+  DCC Anomaly Detection Threshold Tracker
+  Setup Guide for Windows
+================================================
+
+
+OPTION A — RECOMMENDED (Simple batch file)
+-------------------------------------------
+
+STEP 1: Install Python (one time only)
+  1. Go to:  https://www.python.org/downloads/
+  2. Click the big yellow "Download Python" button
+  3. Run the installer
+  4. IMPORTANT: On the first screen, tick the box that says
+     "Add Python to PATH" before clicking Install
+
+STEP 2: Download the app
+  1. Go to the GitHub repository your team has shared
+  2. Click the green "Code" button
+  3. Click "Download ZIP"
+  4. Unzip the file to a folder on your Desktop or Documents
+
+STEP 3: Start the app
+  1. Open the unzipped folder
+  2. Double-click "Start DCC Tracker.bat"
+  3. A black window will appear — this is normal, leave it open
+  4. Your browser will open automatically at the app
+
+STEP 4: Use the app
+  - Enter your estimated runs in the Dashboard
+  - Click the tick (✓) button to save each figure
+  - Go to "ADT Report" to see calculated thresholds
+  - Click "Download CSV" to get the file for DCC submission
+
+STEP 5: Stop the app
+  - Simply close the black window
+  - Or close your browser — the black window will show a warning
+
+YOUR DATA IS SAVED AUTOMATICALLY in the "data" folder
+next to the app. It will still be there next time you start.
+
+
+================================================
+
+OPTION B — DOCKER (for IT / technical users)
+----------------------------------------------
+Requires Docker Desktop: https://www.docker.com/products/docker-desktop/
+
+  1. Install Docker Desktop and start it
+  2. Open a terminal in the app folder and run:
+       docker compose up
+  3. Open your browser at:  http://localhost:5000
+  4. To stop:  press Ctrl+C in the terminal
+
+Advantage: nothing else needs to be installed,
+and the app can run as a background service.
+
+
+================================================
+
+SHARING WITH COLLEAGUES
+------------------------
+Simply share the unzipped folder (or a ZIP of it) via
+Teams, SharePoint, email, or a shared network drive.
+
+Each colleague follows the same steps above.
+Their data is stored in THEIR OWN copy of the app —
+it is not shared between users.
+
+If you want everyone to share the same data, place
+the app folder on a shared network drive and have
+everyone run "Start DCC Tracker.bat" from there.
+Only one person should run it at a time.
+
+
+================================================
