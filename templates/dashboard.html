@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — DCC ADT Tracker{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <div>
+    <h4 class="mb-0">Orchestration Dashboard</h4>
+    <small class="text-muted">
+      {{ estimates_set }} / {{ total_orchs }} orchestrations have estimates set
+    </small>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('report') }}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-table me-1"></i>View ADT Report
+    </a>
+    <a href="{{ url_for('add_orchestration') }}" class="btn btn-primary btn-sm">
+      <i class="bi bi-plus-circle me-1"></i>Add Orchestration
+    </a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th style="width:18%">Orchestration</th>
+          <th>Service Requests per Run</th>
+          <th style="width:16%">Estimated Runs<br><span class="fw-normal text-muted" style="font-size:.75rem">over 8 months</span></th>
+          <th style="width:10%" class="text-center">Actual Runs</th>
+          <th style="width:18%">Log Runs</th>
+          <th style="width:5%"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr id="row-{{ loop.index }}" data-orch="{{ row.name }}">
+          <td>
+            <span class="fw-semibold">{{ row.name.replace('_', ' ') }}</span>
+            {% if row.is_custom %}
+              <span class="badge bg-secondary ms-1" style="font-size:.65rem">custom</span>
+            {% endif %}
+          </td>
+          <td>
+            {% for sr in row.sr %}
+              <span class="badge bg-light text-dark border badge-sr me-1 mb-1"
+                    title="{{ sr.name }}">
+                {{ sr.code }}&nbsp;&times;{{ sr.count }}
+              </span>
+            {% endfor %}
+          </td>
+          <td>
+            <div class="input-group input-group-sm">
+              <input type="number" min="0"
+                     class="form-control estimate-input"
+                     value="{{ row.estimate }}"
+                     data-orch="{{ row.name }}"
+                     data-original="{{ row.estimate }}">
+              <button class="btn btn-outline-secondary save-estimate-btn"
+                      data-orch="{{ row.name }}" title="Save estimate">
+                <i class="bi bi-check-lg"></i>
+              </button>
+            </div>
+            <div class="estimate-feedback mt-1" style="font-size:.75rem; min-height:1rem;"></div>
+          </td>
+          <td class="text-center">
+            <span class="actual-count fw-semibold fs-5" id="actual-{{ row.name }}">
+              {{ row.actual | format_int }}
+            </span>
+          </td>
+          <td>
+            <div class="input-group input-group-sm">
+              <input type="number" min="1" value="1"
+                     class="form-control log-count-input" style="max-width:70px">
+              <button class="btn btn-success log-run-btn" data-orch="{{ row.name }}">
+                <i class="bi bi-play-fill me-1"></i>Log
+              </button>
+            </div>
+            <div class="log-feedback mt-1" style="font-size:.75rem; min-height:1rem;"></div>
+          </td>
+          <td class="text-end">
+            {% if row.is_custom %}
+            <button class="btn btn-link btn-sm text-danger p-0 delete-btn"
+                    data-orch="{{ row.name }}" title="Delete custom orchestration">
+              <i class="bi bi-trash3"></i>
+            </button>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function formatInt(n) {
+  return n.toLocaleString('en-GB');
+}
+
+// Save estimate
+document.querySelectorAll('.save-estimate-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const orch = btn.dataset.orch;
+    const row = btn.closest('tr');
+    const input = row.querySelector('.estimate-input');
+    const feedback = row.querySelector('.estimate-feedback');
+    const val = parseInt(input.value, 10);
+    if (isNaN(val) || val < 0) {
+      feedback.innerHTML = '<span class="text-danger">Must be a non-negative number.</span>';
+      return;
+    }
+    btn.disabled = true;
+    const res = await fetch('/set-estimate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({orchestration: orch, estimated_runs: val})
+    });
+    const data = await res.json();
+    btn.disabled = false;
+    if (data.ok) {
+      input.dataset.original = val;
+      feedback.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill"></i> Saved</span>';
+      setTimeout(() => { feedback.innerHTML = ''; }, 2500);
+    } else {
+      feedback.innerHTML = `<span class="text-danger">${data.error}</span>`;
+    }
+  });
+});
+
+// Highlight unsaved estimate changes
+document.querySelectorAll('.estimate-input').forEach(input => {
+  input.addEventListener('input', () => {
+    const changed = input.value != input.dataset.original;
+    input.classList.toggle('border-warning', changed);
+  });
+});
+
+// Log run
+document.querySelectorAll('.log-run-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const orch = btn.dataset.orch;
+    const row = btn.closest('tr');
+    const countInput = row.querySelector('.log-count-input');
+    const feedback = row.querySelector('.log-feedback');
+    const actualEl = document.getElementById('actual-' + orch);
+    const count = parseInt(countInput.value, 10);
+    if (isNaN(count) || count < 1) {
+      feedback.innerHTML = '<span class="text-danger">Count must be at least 1.</span>';
+      return;
+    }
+    btn.disabled = true;
+    const res = await fetch('/log-run', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({orchestration: orch, count: count})
+    });
+    const data = await res.json();
+    btn.disabled = false;
+    if (data.ok) {
+      actualEl.textContent = formatInt(data.actual);
+      actualEl.classList.add('text-success');
+      setTimeout(() => actualEl.classList.remove('text-success'), 1200);
+      feedback.innerHTML = `<span class="text-success">+${count} logged</span>`;
+      setTimeout(() => { feedback.innerHTML = ''; }, 2500);
+    } else {
+      feedback.innerHTML = `<span class="text-danger">${data.error}</span>`;
+    }
+  });
+});
+
+// Delete custom orchestration
+document.querySelectorAll('.delete-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const orch = btn.dataset.orch;
+    if (!confirm(`Delete custom orchestration "${orch}"?`)) return;
+    const res = await fetch('/delete-orchestration', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({orchestration: orch})
+    });
+    const data = await res.json();
+    if (data.ok) {
+      btn.closest('tr').remove();
+    } else {
+      alert(data.error);
+    }
+  });
+});
+</script>
+{% endblock %}

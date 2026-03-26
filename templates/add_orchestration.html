@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Add Orchestration — DCC ADT Tracker{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="d-flex align-items-center mb-3">
+      <h4 class="mb-0">Add Custom Orchestration</h4>
+    </div>
+
+    <div class="card">
+      <div class="card-body p-4">
+        <form method="POST" action="{{ url_for('add_orchestration') }}" id="orch-form">
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold" for="orchestration_name">Orchestration Name</label>
+            <input type="text" class="form-control" id="orchestration_name"
+                   name="orchestration_name"
+                   placeholder="e.g. My_Custom_Read"
+                   pattern="[A-Za-z0-9_\-]+"
+                   title="Letters, numbers, underscores and hyphens only"
+                   required>
+            <div class="form-text">Use underscores instead of spaces (e.g. <code>Supply_Suspend</code>)</div>
+          </div>
+
+          <label class="form-label fw-semibold">Service Requests per Run</label>
+          <p class="text-muted small mb-2">
+            Select a DCC service request code and enter how many times it is sent per orchestration run.
+          </p>
+
+          <div id="sr-rows">
+            <!-- SR rows injected here -->
+          </div>
+
+          <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="add-sr-btn">
+            <i class="bi bi-plus-lg me-1"></i>Add service request
+          </button>
+
+          <hr class="my-4">
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-floppy me-1"></i>Save Orchestration
+            </button>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SR option data embedded as JSON for the select dropdowns -->
+<script id="sr-data" type="application/json">
+{{ sr_options | tojson }}
+</script>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const srOptions = JSON.parse(document.getElementById('sr-data').textContent);
+const srRowsContainer = document.getElementById('sr-rows');
+
+function buildSelectOptions() {
+  return srOptions.map(o =>
+    `<option value="${o.code}">${o.code} — ${o.name}</option>`
+  ).join('');
+}
+
+function addSrRow(code = '', count = 1) {
+  const idx = srRowsContainer.children.length;
+  const div = document.createElement('div');
+  div.className = 'row g-2 align-items-center mb-2 sr-row';
+  div.innerHTML = `
+    <div class="col-8">
+      <select class="form-select form-select-sm" name="sr_code" required>
+        <option value="" disabled ${!code ? 'selected' : ''}>Select service request…</option>
+        ${srOptions.map(o =>
+          `<option value="${o.code}" ${o.code === code ? 'selected' : ''}>${o.code} — ${o.name}</option>`
+        ).join('')}
+      </select>
+    </div>
+    <div class="col-3">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text">×</span>
+        <input type="number" class="form-control" name="sr_count"
+               min="1" value="${count}" required>
+        <span class="input-group-text">per run</span>
+      </div>
+    </div>
+    <div class="col-1 text-end">
+      <button type="button" class="btn btn-link btn-sm text-danger remove-sr-btn p-0">
+        <i class="bi bi-x-circle"></i>
+      </button>
+    </div>`;
+  div.querySelector('.remove-sr-btn').addEventListener('click', () => {
+    div.remove();
+    updateRemoveButtons();
+  });
+  srRowsContainer.appendChild(div);
+  updateRemoveButtons();
+}
+
+function updateRemoveButtons() {
+  const rows = srRowsContainer.querySelectorAll('.sr-row');
+  rows.forEach(r => {
+    r.querySelector('.remove-sr-btn').style.visibility =
+      rows.length > 1 ? 'visible' : 'hidden';
+  });
+}
+
+document.getElementById('add-sr-btn').addEventListener('click', () => addSrRow());
+
+// Start with one empty SR row
+addSrRow();
+</script>
+{% endblock %}
