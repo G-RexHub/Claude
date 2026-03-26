@@ -1,0 +1,8 @@
+data/tracker_state.json
+reports/*.csv
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+.eggs/
