@@ -175,6 +175,26 @@ def report(ctx, output_dir):
         )
 
 
+@cli.command("delete-orchestration")
+@click.argument("orchestration_name")
+@click.option("--yes", "-y", is_flag=True, help="Skip confirmation prompt.")
+@click.pass_context
+def delete_orchestration(ctx, orchestration_name, yes):
+    """Delete a custom orchestration by name."""
+    state, _, _, state_path = _load(ctx)
+    if not yes:
+        click.confirm(
+            f"Delete custom orchestration '{orchestration_name}'?", abort=True
+        )
+    try:
+        tracker.delete_orchestration(state, orchestration_name)
+    except ValueError as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    tracker.save_state(state, state_path)
+    click.echo(f"Orchestration '{orchestration_name}' deleted.")
+
+
 @cli.command("add-orchestration")
 @click.argument("orchestration_name")
 @click.option(

@@ -186,11 +186,10 @@ def add_orchestration():
 def delete_orchestration():
     orch_name = request.get_json().get("orchestration")
     state, _, _ = _load_all()
-    if orch_name not in state["orchestration_overrides"]:
-        return jsonify({"error": "Can only delete custom orchestrations."}), 400
-    del state["orchestration_overrides"][orch_name]
-    state["estimates"].pop(orch_name, None)
-    state["actual_counts"].pop(orch_name, None)
+    try:
+        tracker.delete_orchestration(state, orch_name)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
     _save(state)
     return jsonify({"ok": True})
 

@@ -151,6 +151,23 @@ def add_orchestration(
     return state
 
 
+def delete_orchestration(state: dict, orch_name: str) -> dict:
+    """Remove a custom orchestration from state['orchestration_overrides'].
+
+    Also removes associated estimates and actual_counts entries.
+    Raises ValueError if orch_name is not a custom orchestration.
+    Returns the mutated state (caller must save).
+    """
+    if orch_name not in state["orchestration_overrides"]:
+        raise ValueError(
+            f"'{orch_name}' is not a custom orchestration and cannot be deleted."
+        )
+    del state["orchestration_overrides"][orch_name]
+    state["estimates"].pop(orch_name, None)
+    state["actual_counts"].pop(orch_name, None)
+    return state
+
+
 # ── Threshold Calculation ─────────────────────────────────────────────────────
 
 def calculate_sr_totals(
